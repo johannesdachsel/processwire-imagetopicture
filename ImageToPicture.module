@@ -1,0 +1,88 @@
+<?php
+
+/**
+* ImageToPicture
+*
+* @author Johannes Dachsel <hello@johannesdachsel.com>
+* @version 1.0
+* @licensed under CC0 Universal Public Domain Dedication
+* @see <https://creativecommons.org/publicdomain/zero/1.0/>
+* 
+*/
+
+
+/**
+* Class ImageToPicture
+*/
+
+class ImageToPicture extends WireData implements Module {
+
+	/**
+	* Module information
+	*/
+	
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Image To Picture',
+			'summary' => 'Provides a method to render images using proper picture element markup',
+			'version' => 1,
+			'href' => 'https://github.com/johannesdachsel/processwire-imagetopicture',
+			'singular' => true,
+			'autoload' => true,
+		);
+	}
+	
+	
+	/**
+	* Default options
+	*/
+	
+	public static $defaultOptions = array(
+		'fallback' => 450,
+		'altText' => '',
+		'sources' => array(
+			'(min-width: 64em)' => 600,
+			'(min-width: 45em)' => 520
+		)
+	);
+	
+
+	/**
+	* Initialize module
+	*/
+	
+	public function init() {
+		$this->addHook('Pageimage::toPicture', $this, 'renderPictureElem');
+	}
+
+	
+	/**
+	* Render picture element function
+	*/
+	
+	public function renderPictureElem(HookEvent $event) {
+		$image = $event->object;
+		
+		// Check for option array and merge with default options
+		if($event->arguments(0) != null && is_array($event->arguments(0))){
+			$options = array_merge(self::$defaultOptions, $event->arguments(0));
+		} else {
+			$options = self::$defaultOptions;
+		}
+		
+		// Prevent default image from upscaling		
+		$fallbackImage = ($image->width > $options['fallback']) ? $image->width($options['fallback']) : $image;
+		$description = (empty($options['altText'])) ? $image->description : $options['altText'];
+		
+		// Create and return output 
+		$output = '<picture>';
+		foreach($options['sources'] as $query => $width){
+			$output .= '<source media="'.$query.'" srcset="'.$image->width($width)->url.'">';	
+		}
+		$output .= '<img src="'.$fallbackImage->url.'" alt="'.$description.'">';
+		$output .= '</picture>';
+		
+		$event->return = $output;
+	}
+		
+}
