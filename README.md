@@ -1,6 +1,6 @@
 # ImageToPicture
 
-Module for [Processwire](https://processwire.com) that adds a new Pageimage method for rendering proper picture element markup from a given image with.
+Module for [Processwire](https://processwire.com) that adds a new Pageimage method for rendering proper picture element markup from a given image.
 
 ## Usage
 
