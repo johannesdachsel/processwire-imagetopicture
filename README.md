@@ -19,7 +19,7 @@ There are some options available to define queries and image sizes. These are th
 	  )
 	));
 	
-*Default options can now be set via the module configuration page.*
+**Default options can now be set via the module configuration page.**
 
 Using `toPicture()` without any options renders the following output:
 
