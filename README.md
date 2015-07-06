@@ -8,7 +8,7 @@ You can call the `toPicture()` method on any image in Processwire like this:
 
 	$image->toPicture();
 
-There are some options available, to define queries and image sizes. These are the defaults:
+There are some options available to define queries and image sizes. These are the defaults:
 
 	$image->toPicture(array(
 	  'fallback' => 450, // width for fallback image
@@ -18,6 +18,8 @@ There are some options available, to define queries and image sizes. These are t
 	    '(min-width: 45em)' => 520 
 	  )
 	));
+	
+:Default options can now be set via the module configuration page.:
 
 Using `toPicture()` without any options renders the following output:
 
