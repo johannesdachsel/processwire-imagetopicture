@@ -4,7 +4,7 @@
 * ImageToPicture
 *
 * @author Johannes Dachsel <hello@johannesdachsel.com>
-* @version 1.0
+* @version 1.1.0
 * @licensed under CC0 Universal Public Domain Dedication
 * @see <https://creativecommons.org/publicdomain/zero/1.0/>
 * 
@@ -15,7 +15,7 @@
 * Class ImageToPicture
 */
 
-class ImageToPicture extends WireData implements Module {
+class ImageToPicture extends WireData implements Module, ConfigurableModule {
 
 	/**
 	* Module information
@@ -25,7 +25,7 @@ class ImageToPicture extends WireData implements Module {
 		return array(
 			'title' => 'Image To Picture',
 			'summary' => 'Provides a method to render images using proper picture element markup',
-			'version' => 1,
+			'version' => 110,
 			'href' => 'https://github.com/johannesdachsel/processwire-imagetopicture',
 			'singular' => true,
 			'autoload' => true,
@@ -40,11 +40,46 @@ class ImageToPicture extends WireData implements Module {
 	public static $defaultOptions = array(
 		'fallback' => 450,
 		'altText' => '',
-		'sources' => array(
-			'(min-width: 64em)' => 600,
-			'(min-width: 45em)' => 520
-		)
+		'queries' => "(min-width: 64em)=600\n(min-width: 45em)=520"
 	);
+	
+	
+	/**
+	* Module configuration
+	*/
+	
+	public static function getModuleConfigInputfields(array $data) {
+		$data = array_merge(self::$defaultOptions, $data);
+		
+		$fields = new InputfieldWrapper();
+		$modules = wire('modules');
+		
+		$field = $modules->get('InputfieldText');
+		$field->label = 'Fallback image width';
+		$field->attr('name', 'fallback');
+		$field->attr('size', 50);
+		$field->attr('value', $data['fallback']);
+		$field->columnWidth = '50';
+		$fields->append($field);
+		
+		$field = $modules->get('InputfieldText');
+		$field->label = 'Alternative text';
+		$field->attr('name', 'altText');
+		$field->attr('size', 50);
+		$field->attr('value', $data['altText']);
+		$field->columnWidth = '50';
+		$fields->append($field);
+		
+		$field = $modules->get('InputfieldTextarea');
+		$field->label = 'Queries and image widths';
+		$field->description = 'One per line, e.g. (min-width: 64em)=600';
+		$field->attr('name', 'queries');
+		$field->attr('value', $data['queries']);
+		$field->columnWidth = '100';
+		$fields->append($field);
+		
+		return $fields;
+	}
 	
 
 	/**
@@ -65,9 +100,21 @@ class ImageToPicture extends WireData implements Module {
 		
 		// Check for option array and merge with default options
 		if($event->arguments(0) != null && is_array($event->arguments(0))){
-			$options = array_merge(self::$defaultOptions, $event->arguments(0));
+			$options = array_merge($this->data, $event->arguments(0));
 		} else {
-			$options = self::$defaultOptions;
+			$options = $this->data;
+		}
+		
+		//Prepare queries
+		if(array_key_exists('sources', $options)){
+			$queries = $options['sources'];
+		} else {
+			$queryElements = explode("\n", $options['queries']);
+			$queryElements = array_map("trim", $queryElements);
+			foreach($queryElements as $queryElement) {
+			    list($key, $value) = explode("=", $queryElement);
+			    $queries[$key] = $value;
+			}
 		}
 		
 		// Prevent default image from upscaling		
@@ -76,7 +123,7 @@ class ImageToPicture extends WireData implements Module {
 		
 		// Create and return output 
 		$output = '<picture>';
-		foreach($options['sources'] as $query => $width){
+		foreach($queries as $query => $width){
 			$output .= '<source media="'.$query.'" srcset="'.$image->width($width)->url.'">';	
 		}
 		$output .= '<img src="'.$fallbackImage->url.'" alt="'.$description.'">';
